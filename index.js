@@ -2,6 +2,7 @@ const pg = require('pg');
 const client = new pg.Client('postgres://localhost/digimon_backend_db');
 const express = require('express');
 const app = express();
+app.use(express.json());
 
 
 //GET ALL DIGIMON
@@ -20,6 +21,8 @@ app.get('/api/digimon', async(req, res, next)=> {
     }
 });
 
+
+//GET SINGLE DIGIMON
 app.get("/api/digimon/:id", async (req, res, next) => {
     try {
       const SQL = `SELECT * FROM digimon WHERE id=$1;`;
@@ -39,13 +42,30 @@ app.get("/api/digimon/:id", async (req, res, next) => {
   });
 
 app.delete("/api/digimon/:id", async (req, res, next) => {
-    console.log("req.params.id", req.params.id);
-
-    const SQL = `DELETE FROM food WHERE id=$1;`;
-
-    const response = await client.query(SQL, [req.params.id]);
-    console.log(response.rows);
+    try{
+      const SQL = `
+        DELETE 
+        FROM digimon
+        WHERE id = $1
+      `;
+      const response = await client.query(SQL, [req.params.id])
+      res.send(response.rows);
+    } catch(error) {
+      next(error)
+    }
 });
+
+app.post("/api/digimon", async (req,res,next) => {
+  try {
+    const SQL = `
+    INSERT INTO digimon (name, rank)
+    VALUES($1, $2)
+    `;
+    const response = await client.query(SQL, [req.body.name, req.body.rank])
+  } catch (error) {
+    next(error)
+  }
+})
 
 app.use((error, req, res, next) => {
     res.status(500);
